@@ -202,12 +202,20 @@ wire [1:0] ar = status[20:19];
 assign VIDEO_ARX = (!ar) ? ((status[2]|mod_squa)  ? 8'd4 : 8'd3) : (ar - 1'd1);
 assign VIDEO_ARY = (!ar) ? ((status[2]|mod_squa)  ? 8'd3 : 8'd4) : 12'd0;
 
+// Used status bits
+// 00000000001111111111222222222233
+// 01234567890123456789012345678901
+// 0123456789abcdefghijklmnopqrstuv
+//   xxxxxxxxxxxxxx   xxxx    x    
+
 `include "build_id.v" 
 localparam CONF_STR = {
 	"A.BAGMAN;;",
 	"H0OJK,Aspect ratio,Original,Full Screen,[ARC1],[ARC2];",
 	"H1H0O2,Orientation,Vert,Horz;",
 	"O35,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
+	"O8B,Analog Video H-Pos,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15;",
+  "OCF,Analog Video V-Pos,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15;",
 	"h2OR,Autosave Hiscores,Off,On;",
 	"-;",
 	"DIP;",
@@ -343,6 +351,7 @@ pause #(3,3,2,25) pause (
 
 wire hblank, vblank;
 wire hs, vs;
+wire rs_hs, rs_vs; // Syncs after frame repositioning
 wire [2:0] r,g;
 wire [1:0] b;
 wire ce_pix;
@@ -360,10 +369,29 @@ arcade_video #(256,8) arcade_video
 	.RGB_in(rgb_out),
 	.HBlank(hblank),
 	.VBlank(vblank),
-	.HSync(hs),
-	.VSync(vs),
+	.HSync(rs_hs),
+	.VSync(rs_vs),
 
 	.fx(status[5:3])
+);
+
+reg [3:0] hoffset = 4'b0;
+reg [3:0] voffset = 4'b0;
+
+jtframe_resync jtframe_resync
+(
+  .clk(clk_48m),
+  .pxl_cen(ce_pix),
+  .hs_in(hs),
+  .vs_in(vs),
+  .LVBL(vblank),
+  .LHBL(hblank),
+//  .hoffset(status[11:8]),
+//  .voffset(status[15:12]),
+  .hoffset(hoffset),
+  .voffset(voffset),
+  .hs_out(rs_hs),
+  .vs_out(rs_vs)
 );
 
 
