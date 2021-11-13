@@ -343,6 +343,7 @@ pause #(3,3,2,25) pause (
 
 wire hblank, vblank;
 wire hs, vs;
+wire rs_hs, rs_vs; // Syncs after frame repositioning
 wire [2:0] r,g;
 wire [1:0] b;
 wire ce_pix;
@@ -360,10 +361,27 @@ arcade_video #(256,8) arcade_video
 	.RGB_in(rgb_out),
 	.HBlank(hblank),
 	.VBlank(vblank),
-	.HSync(hs),
-	.VSync(vs),
+	.HSync(rs_hs),
+	.VSync(rs_vs),
 
 	.fx(status[5:3])
+);
+
+reg [3:0] hoffset = 4'b0;
+reg [3:0] voffset = 4'b0;
+
+jtframe_resync jtframe_resync
+(
+  .clk(clk_sys),
+  .pxl_cen(ce_pix),
+  .hs_in(hs),
+  .vs_in(vs),
+  .LVBL(vblank),
+  .LHBL(hblank),
+  .hoffset(hoffset),
+  .voffset(voffset),
+  .hs_out(rs_hs),
+  .vs_out(rs_vs)
 );
 
 
