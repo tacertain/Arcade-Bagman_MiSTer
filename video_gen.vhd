@@ -32,9 +32,8 @@ signal hcnt    : unsigned (8 downto 0) := to_unsigned(511,9);
 signal vcnt    : unsigned (8 downto 0) := to_unsigned(511,9);
 signal vcnt_r  : unsigned (8 downto 0) := to_unsigned(511,9);
 
-signal hoff    : integer range -8 to 7;
-signal voff    : integer range -8 to 7;
-signal hsync0  : std_logic;
+signal hoff    : signed (3 downto 0) := signed(hoffset);
+signal voff    : signed (3 downto 0) := signed(voffset);
 
 signal enable_clk : std_logic := '0';
 
@@ -47,9 +46,6 @@ x_tile     <= std_logic_vector(hcnt(7 downto 3));
 y_tile     <= std_logic_vector(vcnt_r(7 downto 3));
 x_pixel    <= std_logic_vector(hcnt(2 downto 0));
 y_pixel    <= std_logic_vector(vcnt_r(2 downto 0));
-
-hoff       <= to_integer(signed(hoffset));
-voff       <= to_integer(signed(voffset));
 
 -- Compteur horizontal : 511-128+1=384 pixels
 -- 128 à 175 :  48 pixels fin de ligne 
@@ -91,17 +87,17 @@ begin
 				end if;
 			end if;
 
-			if    hcnt = to_unsigned((175+ hoff),9) then hsync <= '0';
-			elsif hcnt = to_unsigned((175+ hoff+ 29),9) then hsync <= '1';
+			if    hcnt = 175+ hoff then hsync <= '0';
+			elsif hcnt = 175+ hoff+ 29 then hsync <= '1';
 			end if;    
 
       -- Turn sync on - could be at the end of this frame or the start of the next
-			if    vcnt = to_unsigned(511+ voff,9) then vsync <= '0';
-			elsif vcnt = to_unsigned(247+ voff,9) then vsync <= '0';
+			if    vcnt = 511+ voff then vsync <= '0';
+			elsif vcnt = 247+ voff then vsync <= '0';
       -- Similarly, turn it off. The offsets may underflow or overflow, but
       -- will be correct.
-			elsif vcnt = to_unsigned(512+ voff,9) then vsync <= '1';
-			elsif vcnt = to_unsigned(250+ voff,9) then vsync <= '1';
+			elsif vcnt = 512+ voff then vsync <= '1';
+			elsif vcnt = 250+ voff then vsync <= '1';
 			end if;    
 
 			if    hcnt = (127+8+1) then hblank <= '1'; -- +8 = retard du shift_register + 1 pixel
